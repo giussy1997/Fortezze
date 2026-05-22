@@ -259,6 +259,7 @@ html, body {
   white-space: nowrap;
 }
 .tv-run  { color: var(--success); }
+.tv-warn { color: var(--sand); }
 .tv-exp  { color: var(--danger); }
 .tv-none { color: var(--text3); }
 .timer-sub { font-size: 10px; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 1px; }
@@ -445,7 +446,8 @@ function fmtMs(ms) {
   if (d > 0) str += d + 'g ';
   if (d > 0 || h > 0) str += h + 'h ';
   str += String(m).padStart(2,'0') + ':' + String(sc).padStart(2,'0');
-  return { str: str.trim(), cls: 'tv-run', sub: 'restante' };
+  const cls = ms <= 15 * 60 * 1000 ? 'tv-warn' : 'tv-run';
+  return { str: str.trim(), cls, sub: 'restante' };
 }
 
 function updateTotal() {
@@ -714,16 +716,17 @@ function checkNotifs() {
       const ms = f.timerEnd - now;
       const name = f.name || 'Fortezza';
 
+      // Reset fired se il timer è stato reimpostato
       const kStamp = notifKey(w.id, i, 'stamp');
       if (fired[kStamp] !== f.timerEnd) {
         fired[kStamp] = f.timerEnd;
-        delete fired[notifKey(w.id, i, '10m')];
-        delete fired[notifKey(w.id, i, 'exp')];
+        delete fired[notifKey(w.id, i, '15m')];
       }
 
-      const k10 = notifKey(w.id, i, '10m');
-      if (!fired[k10] && ms > 0 && ms <= 15 * 60 * 1000) {
-        fired[k10] = true;
+      // Notifica 15 minuti prima
+      const k15 = notifKey(w.id, i, '15m');
+      if (!fired[k15] && ms > 0 && ms <= 15 * 60 * 1000) {
+        fired[k15] = true;
         const min = Math.ceil(ms / 60000);
         sendNotif(`⚔ ${name} — ${w.name}`, `Il timer scade tra circa ${min} minut${min === 1 ? 'o' : 'i'}!`);
       }
